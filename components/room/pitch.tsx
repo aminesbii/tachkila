@@ -17,10 +17,7 @@ export function Pitch({ room, seat }: { room: PublicRoom; seat: number }) {
       <div className="absolute left-1/2 top-1/2 size-14 -translate-x-1/2 -translate-y-1/2 rounded-full border border-white/15" />
 
       <div className="flex items-center justify-between px-1 pb-2">
-        <span className="truncate text-xs font-bold text-white/95">
-          {p ? p.name : `Seat ${seat}`}
-          {p?.isHost && " · Host"}
-        </span>
+        <span className="truncate text-xs font-bold text-white/95">{p?.name ?? `Seat ${seat}`}</span>
         <span className="shrink-0 text-[10px] font-semibold uppercase tracking-widest text-white/70">
           {room.formationLabel}
         </span>
@@ -43,10 +40,10 @@ export function Pitch({ room, seat }: { room: PublicRoom; seat: number }) {
                       <span
                         className={cn(
                           "inline-flex h-4 min-w-6 items-center justify-center rounded-full px-1 text-[9px] font-bold text-white",
-                          ptsClass(entry.pts ?? 0)
+                          ptsClass(entry.pts)
                         )}
                       >
-                        {entry.pts ?? "?"}
+                        {entry.pts}
                       </span>
                     </div>
                   ) : (

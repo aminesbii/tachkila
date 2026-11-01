@@ -1,9 +1,9 @@
-import type { Participation } from "@/lib/game";
+import { totalSlots } from "@/lib/formations";
+import { STARTING_BANK, type Participation } from "@/lib/game";
 
 export interface SeatScore {
   seat: number;
   name: string;
-  isHost: boolean;
   score: number;
   bankPoints: number;
   acquired: number;
@@ -11,7 +11,7 @@ export interface SeatScore {
 }
 
 export function scoreRoom(room: Participation): SeatScore[] {
-  const total = Object.values(room.formation).reduce((a, b) => a + b, 0);
+  const total = totalSlots(room.formation);
   return [...room.participants]
     .map((p) => {
       let score = 0;
@@ -22,7 +22,6 @@ export function scoreRoom(room: Participation): SeatScore[] {
       return {
         seat: p.seat,
         name: p.name,
-        isHost: p.isHost,
         score,
         bankPoints: p.bankPoints,
         acquired: p.roster.length,
@@ -33,7 +32,7 @@ export function scoreRoom(room: Participation): SeatScore[] {
 }
 
 export function rankScores(scores: SeatScore[]): SeatScore[] {
-  const active = scores.filter((s) => s.acquired > 0 || s.bankPoints < 100);
+  const active = scores.filter((s) => s.acquired > 0 || s.bankPoints < STARTING_BANK);
   return [...active].sort((a, b) => {
     if (b.score !== a.score) return b.score - a.score;
     if (b.bankPoints !== a.bankPoints) return b.bankPoints - a.bankPoints;

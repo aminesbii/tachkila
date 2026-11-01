@@ -30,10 +30,10 @@ export function SoldList({ room }: { room: PublicRoom }) {
                 <span
                   className={cn(
                     "inline-flex h-4 min-w-5 items-center justify-center rounded-full px-1 text-[10px] font-bold text-white",
-                    ptsClass(e.pts ?? 0)
+                    ptsClass(e.pts)
                   )}
                 >
-                  {e.pts ?? "?"}
+                  {e.pts}
                 </span>
               </div>
               <span className="text-xs text-muted-foreground">

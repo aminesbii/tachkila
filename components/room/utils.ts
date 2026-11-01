@@ -1,4 +1,7 @@
-import type { PoolEntry, PublicPoolEntry, PublicRoom, Position } from "@/lib/types";
+import { POSITION_LABEL, POSITION_SHORT_LABEL } from "@/lib/types";
+import type { Position, PublicPoolEntry, PublicRoom } from "@/lib/types";
+
+export { POSITION_LABEL, POSITION_SHORT_LABEL };
 
 const FLAGS: Record<string, string> = {
   Tunisia: "🇹🇳",
@@ -24,10 +27,28 @@ const FLAGS: Record<string, string> = {
   Poland: "🇵🇱",
   Nigeria: "🇳🇬",
   Serbia: "🇷🇸",
+  Colombia: "🇨🇴",
+  Mexico: "🇲🇽",
+  Algeria: "🇩🇿",
+  Mali: "🇲🇱",
+  Benin: "🇧🇯",
+  Chad: "🇹🇩",
+  Libya: "🇱🇾",
+};
+
+const NATIONALITY_ALIASES: Record<string, string> = {
+  Egyption: "Egypt",
+  Italien: "Italy",
+  Spanish: "Spain",
+  Brazilian: "Brazil",
+  Maroc: "Morocco",
+  Negiria: "Nigeria",
+  Tunisia: "Tunisaia",
+  Cote_divoire: "Côte d'Ivoire",
 };
 
 export function flagFor(nationality: string): string {
-  return FLAGS[nationality] ?? "🌍";
+  return FLAGS[NATIONALITY_ALIASES[nationality] ?? nationality] ?? "🌍";
 }
 
 export function initials(name: string): string {
@@ -42,13 +63,6 @@ export function ptsClass(pts: number): string {
   if (pts === 2) return "bg-sky-500 text-white";
   return "bg-zinc-400 text-white";
 }
-
-export const POSITION_LABEL: Record<Position, string> = {
-  GK: "Goalkeeper",
-  DEF: "Defender",
-  MID: "Midfielder",
-  FWD: "Forward",
-};
 
 export function entryById(room: PublicRoom, entryId: string): PublicPoolEntry | undefined {
   return room.pool.find((e) => e.id === entryId);
@@ -66,7 +80,7 @@ export function rosterEntries(room: PublicRoom, roster: string[]): PublicPoolEnt
 }
 
 export function teamScore(room: PublicRoom, roster: string[]): number {
-  return rosterEntries(room, roster).reduce((sum, e) => sum + (e.status === "sold" ? e.pts ?? 0 : 0), 0);
+  return rosterEntries(room, roster).reduce((sum, e) => sum + (e.status === "sold" ? e.pts : 0), 0);
 }
 
 export function filledSlots(room: PublicRoom, roster: string[], position: Position): number {
@@ -81,6 +95,14 @@ export function soldCount(room: PublicRoom): number {
   return room.pool.filter((e) => e.status === "sold").length;
 }
 
-export function slotLabel(room: PublicRoom, entry: PoolEntry | PublicPoolEntry): string {
-  return `${entry.position} · ${entry.pts ?? "??"} pts`;
+export function nextEntries(room: PublicRoom, count = 5): PublicPoolEntry[] {
+  return room.pool.filter((e) => e.status === "upcoming").slice(0, count);
+}
+
+export function remainingByPosition(room: PublicRoom): Record<Position, number> {
+  const remaining = { GK: 0, DEF: 0, MID: 0, FWD: 0 } as Record<Position, number>;
+  for (const entry of room.pool) {
+    if (entry.status === "upcoming") remaining[entry.position] += 1;
+  }
+  return remaining;
 }

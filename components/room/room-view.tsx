@@ -10,7 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { fetchRoom, getToken, markUnsold, resetRoom, startAuction } from "@/lib/api-client";
+import { markLocalUnsold, loadLocalRoom, resetLocalRoom, startLocalAuction } from "@/lib/room-store";
 import { upcomingCount } from "@/components/room/utils";
 import { LobbyPanel } from "@/components/room/lobby-panel";
 import { AuctionStage } from "@/components/room/auction-stage";
@@ -25,15 +25,15 @@ export function RoomView({ code }: { code: string }) {
 
   const { data, isPending, error, isError } = useQuery({
     queryKey: roomKey,
-    queryFn: () => fetchRoom(code, getToken(code)),
-    refetchInterval: 2000,
+    queryFn: () => loadLocalRoom(code),
+    retry: false,
   });
 
   const invalidate = () => qc.invalidateQueries({ queryKey: roomKey });
 
-  const start = useMutation({ mutationFn: () => startAuction(code, getToken(code) ?? ""), onSuccess: invalidate });
-  const reset = useMutation({ mutationFn: () => resetRoom(code, getToken(code) ?? ""), onSuccess: invalidate });
-  const unsold = useMutation({ mutationFn: () => markUnsold(code, getToken(code) ?? ""), onSuccess: invalidate });
+  const start = useMutation({ mutationFn: async () => startLocalAuction(code), onSuccess: invalidate });
+  const reset = useMutation({ mutationFn: async () => resetLocalRoom(code), onSuccess: invalidate });
+  const unsold = useMutation({ mutationFn: async () => markLocalUnsold(code), onSuccess: invalidate });
 
   async function copyCode() {
     if (!data) return;
@@ -62,7 +62,10 @@ export function RoomView({ code }: { code: string }) {
             {copied && <span className="text-xs font-medium text-emerald-600">copied!</span>}
           </div>
           <p className="text-xs text-muted-foreground">
-            Formation {data?.formationLabel ?? "—"} · {data?.blindMode ? "Blind mode" : "Open points"}
+            Formation {data?.formationLabel ?? "—"} ·{" "}
+            {data ? `${data.participants.length} game players` : ""} ·{" "}
+            {data ? `${data.totalEntries} footballers` : ""}
+            {data ? " · you are the host" : ""}
           </p>
         </div>
 
@@ -80,6 +83,13 @@ export function RoomView({ code }: { code: string }) {
 
       <Separator className="my-4" />
 
+      {data && (
+        <p className="mb-4 rounded-lg bg-muted px-3 py-2 text-xs text-muted-foreground">
+          Saved on this device — the whole room is on your phone, no internet, no account and nothing sent
+          anywhere. Game players bid out loud, you record the result on the host screen.
+        </p>
+      )}
+
       <main className="flex flex-1 flex-col gap-6 pb-16">
         {isPending && (
           <div className="flex flex-col items-center justify-center gap-3 py-24 text-muted-foreground">
@@ -91,14 +101,15 @@ export function RoomView({ code }: { code: string }) {
         {isError && (
           <Card>
             <CardHeader>
-              <CardTitle>Room unavailable</CardTitle>
+              <CardTitle>Room not found on this device</CardTitle>
               <CardDescription>
-                {error?.message ?? "Could not load this room."} You can try joining again.
+                {error?.message ?? "This room is not saved on this phone."} Rooms live in this browser&apos;s
+                storage — create a new room to start playing.
               </CardDescription>
             </CardHeader>
             <CardContent className="flex gap-2">
               <Button asChild variant="outline">
-                <Link href="/join">Join a room</Link>
+                <Link href="/create">Create a room</Link>
               </Button>
               <Button asChild variant="outline">
                 <Link href="/">Back home</Link>

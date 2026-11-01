@@ -6,26 +6,14 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Pitch } from "@/components/room/pitch";
-import { teamScore } from "@/components/room/utils";
+import { rankScores, scoreRoom } from "@/lib/scoring";
 import { cn } from "@/lib/utils";
 import type { PublicRoom } from "@/lib/types";
 
-export function ResultsPanel({ room, onReset }: { room: PublicRoom; onReset: () => void }) {
-  const standings = room.participants
-    .map((p) => ({
-      seat: p.seat,
-      name: p.name,
-      isHost: p.isHost,
-      score: teamScore(room, p.roster),
-      bank: p.bankPoints,
-      slots: p.roster.length,
-    }))
-    .sort((a, b) => {
-      if (b.score !== a.score) return b.score - a.score;
-      if (b.bank !== a.bank) return b.bank - a.bank;
-      return a.seat - b.seat;
-    });
+const MEDALS = ["bg-amber-500", "bg-zinc-400", "bg-orange-700"];
 
+export function ResultsPanel({ room, onReset }: { room: PublicRoom; onReset: () => void }) {
+  const standings = rankScores(scoreRoom(room));
   const winner = standings[0];
 
   return (
@@ -34,11 +22,12 @@ export function ResultsPanel({ room, onReset }: { room: PublicRoom; onReset: () 
         <div className="h-1.5 w-full bg-gradient-to-r from-emerald-500 via-amber-400 to-rose-500" />
         <CardHeader className="flex flex-col items-center gap-1 text-center">
           <Trophy className="size-10 text-amber-500" />
-          <CardTitle className="text-3xl">{winner?.name} wins!</CardTitle>
-          <CardDescription>
-            {winner?.score} team points · {winner?.bank} bank points left ·{" "}
-            {winner?.slots} players signed
-          </CardDescription>
+          <CardTitle className="text-3xl">{winner ? `${winner.name} wins!` : "Auction finished"}</CardTitle>
+          {winner && (
+            <CardDescription>
+              {winner.score} team points · {winner.bankPoints} bank points left · {winner.acquired} players signed
+            </CardDescription>
+          )}
         </CardHeader>
       </Card>
 
@@ -58,27 +47,20 @@ export function ResultsPanel({ room, onReset }: { room: PublicRoom; onReset: () 
                       i === 0 && "font-extrabold"
                     )}
                   >
-                    <span className="flex items-center gap-2">
+                    <span className="flex min-w-0 items-center gap-2">
                       <span
                         className={cn(
-                          "flex size-6 items-center justify-center rounded-full text-xs font-bold",
-                          i === 0
-                            ? "bg-amber-500 text-white"
-                            : i === 1
-                              ? "bg-zinc-400 text-white"
-                              : i === 2
-                                ? "bg-orange-700 text-white"
-                                : "bg-muted text-muted-foreground"
+                          "flex size-6 shrink-0 items-center justify-center rounded-full text-xs font-bold text-white",
+                          MEDALS[i] ?? "bg-muted text-muted-foreground"
                         )}
                       >
                         {i + 1}
                       </span>
                       <span className="truncate">{p.name}</span>
-                      <span className="text-xs text-muted-foreground">(seat {p.seat})</span>
                     </span>
-                    <span className="flex items-center gap-2">
+                    <span className="flex shrink-0 items-center gap-2">
                       <Badge variant="outline" className="h-5 text-[10px]">
-                        {p.bank} bank
+                        {p.bankPoints} bank
                       </Badge>
                       <span className="w-8 text-right font-black">{p.score}</span>
                     </span>
@@ -89,14 +71,14 @@ export function ResultsPanel({ room, onReset }: { room: PublicRoom; onReset: () 
           </Card>
 
           <Card size="sm">
-            <CardHeader className="flex-row items-center justify-between">
+            <CardHeader>
               <CardTitle className="text-sm">Snapshot</CardTitle>
             </CardHeader>
             <CardContent>
               <p className="text-sm text-muted-foreground">
                 Room <span className="font-mono font-bold text-foreground">{room.code}</span> ·{" "}
-                {room.formationLabel} · {room.totalEntries} footballers auctioned.
-                {room.blindMode && " Points were hidden until sold."}
+                {room.formationLabel} · {room.participants.length} game players · {room.totalEntries} footballers
+                auctioned. You ran it as the host, so you do not score.
               </p>
               <Button
                 variant="outline"
@@ -119,20 +101,18 @@ export function ResultsPanel({ room, onReset }: { room: PublicRoom; onReset: () 
             Final formations
           </h3>
           <div className="grid gap-3 sm:grid-cols-2">
-            {[1, 2, 3, 4].map((seat) => (
-              <Pitch key={seat} room={room} seat={seat} />
+            {room.participants.map((p) => (
+              <Pitch key={p.seat} room={room} seat={p.seat} />
             ))}
           </div>
         </section>
       </div>
 
-      {room.viewer.isHost && (
-        <div className="flex justify-center">
-          <Button variant="outline" onClick={onReset}>
-            <RotateCcw /> Reset &amp; play again
-          </Button>
-        </div>
-      )}
+      <div className="flex justify-center">
+        <Button variant="outline" onClick={onReset}>
+          <RotateCcw /> Play again with a new random pool
+        </Button>
+      </div>
     </div>
   );
 }

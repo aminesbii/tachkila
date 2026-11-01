@@ -2,16 +2,16 @@ import Link from "next/link";
 
 const steps = [
   {
-    title: "Create or join",
-    body: "The host picks a formation and shares a 5-letter room code with 3 friends.",
+    title: "Host sets the table",
+    body: "The host creates the room, picks the formation and the 2–6 game players. The host never plays and holds no points.",
   },
   {
-    title: "Blind bidding",
-    body: "Footballers are revealed one by one. Bid bank points out loud — the host records the winner.",
+    title: "Everyone bids out loud",
+    body: "Footballers come up goalkeepers first, then defenders, midfielders and attackers, left to right. The host only types the final bid and assigns the winner.",
   },
   {
     title: "Draft your XI",
-    body: "Each squad needs exactly the formation's players. Higher points win the game.",
+    body: "Each game player completes the formation's squad. The team with the most points wins.",
   },
 ];
 
@@ -20,14 +20,14 @@ export default function Home() {
     <main className="mx-auto flex min-h-screen w-full max-w-4xl flex-col items-center justify-center gap-10 px-4 py-16">
       <div className="flex flex-col items-center gap-4 text-center">
         <span className="rounded-full bg-primary px-3 py-1 text-xs font-semibold text-primary-foreground">
-          4 players · 1 room · 100 bank points each
+          2–6 game players · one screen, no app for the players · 100 bank points each
         </span>
         <h1 className="text-5xl font-black tracking-tight sm:text-6xl">
           Tachkila
         </h1>
         <p className="max-w-xl text-lg text-zinc-600 dark:text-zinc-400">
-          The football blind-bidding draft game. Reveal footballers, bid smart,
-          complete your formation, and out-score your friends.
+          The football live auction draft game. The host runs the whole room on one screen while
+          everyone around the table bids out loud.
         </p>
         <div className="mt-2 flex flex-col gap-3 sm:flex-row">
           <Link
@@ -35,12 +35,6 @@ export default function Home() {
             className="inline-flex h-11 items-center justify-center rounded-lg bg-primary px-6 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/80"
           >
             Create a room
-          </Link>
-          <Link
-            href="/join"
-            className="inline-flex h-11 items-center justify-center rounded-lg border border-border bg-background px-6 text-sm font-semibold transition-colors hover:bg-muted"
-          >
-            Join with code
           </Link>
         </div>
       </div>
