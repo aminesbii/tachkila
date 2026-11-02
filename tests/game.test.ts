@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { countsByPosition, freeAgentsUsed, generatePool, shuffle } from "@/lib/pool";
+import { countsByPosition, freeAgentsUsed, generatePool, shuffle } from "@/engine/pool";
 import { playersByPosition } from "@/data/players";
 import {
   FORMATION_DEFS,
@@ -10,11 +10,11 @@ import {
   poolBreakdown,
   slotRows,
   totalSlots,
-} from "@/lib/formations";
-import { serializeRoom, teamScore, STARTING_BANK } from "@/lib/game";
-import { rankScores, scoreRoom } from "@/lib/scoring";
-import { POSITIONS } from "@/lib/types";
-import type { Formation, PoolEntry, RoomDoc } from "@/lib/types";
+} from "@/engine/formations";
+import { serializeRoom, teamScore, STARTING_BANK } from "@/engine/game";
+import { rankScores, scoreRoom } from "@/engine/scoring";
+import { POSITIONS, ROOM_SCHEMA_VERSION } from "@/engine/types";
+import type { Formation, PoolEntry, RoomDoc } from "@/engine/types";
 
 const DEFAULT_FORMATION: Formation = { GK: 1, DEF: 4, MID: 4, FWD: 2 };
 
@@ -147,7 +147,10 @@ function makeRoom(overrides: Partial<RoomDoc> = {}): RoomDoc {
     { id: "FWD-0", playerId: "p3", name: "Mbappé", position: "FWD", pts: 4, nationality: "France", status: "sold", winnerSeat: 1, winningBid: 20, order: 2 },
   ];
   return {
-    updatedAt: new Date(),
+    schemaVersion: ROOM_SCHEMA_VERSION,
+    revision: 0,
+    createdAt: 1_700_000_000_000,
+    updatedAt: 1_700_000_000_000,
     formation: DEFAULT_FORMATION,
     status: "auction",
     currentIndex: 0,

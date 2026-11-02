@@ -8,8 +8,8 @@ import {
   resetRoom,
   startAuction,
   updateRoomSettings,
-} from "@/lib/room-reducer";
-import { poolSize, totalSlots } from "@/lib/formations";
+} from "@/engine/room-reducer";
+import { poolSize, totalSlots } from "@/engine/formations";
 
 const NAMES = ["Amine", "Yassine", "Sami", "Nour"];
 
@@ -171,6 +171,21 @@ describe("auction flow", () => {
       "bad_entry"
     );
     expect(doc.currentIndex).toBe(0);
+  });
+
+  it("refuses a free signing and accepts the smallest bid", () => {
+    const doc = startAuction(newRoom());
+    const entry = currentEntry(doc);
+
+    expectGameError(() => assignPlayer(doc, { entryId: entry.id, seat: 1, bid: 0 }), "bad_bid");
+    expect(doc.participants[0].bankPoints).toBe(100);
+    expect(doc.participants[0].roster).toEqual([]);
+
+    const sold = assignPlayer(doc, { entryId: entry.id, seat: 1, bid: 1 });
+    const winner = sold.participants.find((p) => p.seat === 1)!;
+    expect(winner.bankPoints).toBe(99);
+    expect(winner.roster).toEqual([entry.id]);
+    expect(sold.pool.find((e) => e.id === entry.id)?.winningBid).toBe(1);
   });
 
   it("locks the auction once it has started", () => {

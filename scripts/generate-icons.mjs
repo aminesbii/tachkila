@@ -1,6 +1,7 @@
 /**
- * Generates every app icon the PWA needs, with no dependencies and no network:
- * a pure-Node PNG encoder (zlib only) plus a tiny signed-distance rasteriser.
+ * Generates every app icon and the splash mark with no dependencies and no
+ * network: a pure-Node PNG encoder (zlib only) plus a tiny signed-distance
+ * rasteriser.
  *
  *   npm run icons
  */
@@ -8,10 +9,10 @@ import { deflateSync } from "node:zlib";
 import { mkdirSync, writeFileSync } from "node:fs";
 import path from "node:path";
 
-const OUT_DIR = path.join(import.meta.dirname, "..", "public", "icons");
+const OUT_DIR = path.join(import.meta.dirname, "..", "assets", "images");
 
-const BACKGROUND_TOP = [11, 110, 75]; // deep pitch green
-const BACKGROUND_BOTTOM = [21, 151, 104]; // emerald
+const BACKGROUND_TOP = [16, 134, 91]; // pitch green highlight
+const BACKGROUND_BOTTOM = [5, 56, 38]; // deep grass shadow
 const MARK = [255, 255, 255];
 
 /* ---------------------------------------------------------------- PNG ---- */
@@ -94,7 +95,7 @@ function createCanvas(size) {
   return { size, rgba: new Uint8Array(size * size * 4) };
 }
 
-/** Paints `colorAt(y)` over the canvas with per-pixel coverage in [0, 1]. */
+/** Paints a colour over the canvas with per-pixel coverage in [0, 1]. */
 function paintSolid(canvas, coverageAt, colorAt) {
   const { size, rgba } = canvas;
   for (let y = 0; y < size; y++) {
@@ -118,25 +119,28 @@ function paintSolid(canvas, coverageAt, colorAt) {
 
 /**
  * Draws the icon: a pitch-green tile, a white ball outline and a bold "T".
- * `contentScale` shrinks the mark so maskable icons keep a safe zone.
+ * `contentScale` shrinks the mark so adaptive icons keep Android's safe zone.
  */
-function drawIcon({ size, cornerRadius, contentScale }) {
+function drawIcon({ size, cornerRadius = 0, contentScale = 1, background = true }) {
   const canvas = createCanvas(size);
-  const gradient = (y) => mix(BACKGROUND_TOP, BACKGROUND_BOTTOM, y / size);
 
-  paintSolid(canvas, (x, y) => {
-    if (cornerRadius > 0) {
-      // 0.5px antialiasing band around the rounded tile.
-      return 0.5 - sdRoundRect(x, y, size, size, cornerRadius);
-    }
-    return 1;
-  }, gradient);
+  if (background) {
+    const gradient = (y) => mix(BACKGROUND_TOP, BACKGROUND_BOTTOM, y / size);
+    paintSolid(
+      canvas,
+      (x, y) => {
+        if (cornerRadius > 0) return 0.5 - sdRoundRect(x, y, size, size, cornerRadius);
+        return 1;
+      },
+      gradient
+    );
+  }
 
   const s = size * contentScale;
   const cx = size / 2;
   const cy = size / 2;
   const ringRadius = s * 0.36;
-  const ringWidth = s * 0.048;
+  const ringWidth = s * 0.05;
 
   const bar = { hw: s * 0.2, hh: s * 0.042, cx, cy: cy - s * 0.105 };
   const stem = { hw: s * 0.042, hh: s * 0.148, cx, cy: cy + s * 0.04 };
@@ -160,17 +164,32 @@ function drawIcon({ size, cornerRadius, contentScale }) {
 
 /* ---------------------------------------------------------------- write --- */
 
+const written = [];
+
 function write(name, canvas) {
   const file = path.join(OUT_DIR, name);
   writeFileSync(file, encodePng(canvas.size, canvas.size, canvas.rgba));
-  console.log(`  ${name} (${canvas.size}×${canvas.size})`);
+  written.push(`${name} (${canvas.size}×${canvas.size})`);
 }
 
 mkdirSync(OUT_DIR, { recursive: true });
 
 console.log("Generating app icons…");
-write("icon-192.png", drawIcon({ size: 192, cornerRadius: 42, contentScale: 1 }));
-write("icon-512.png", drawIcon({ size: 512, cornerRadius: 112, contentScale: 1 }));
-write("icon-maskable-512.png", drawIcon({ size: 512, cornerRadius: 0, contentScale: 0.72 }));
-write("apple-touch-icon.png", drawIcon({ size: 180, cornerRadius: 0, contentScale: 0.86 }));
+
+// iOS / store icon: full-bleed square, the OS applies its own mask.
+write("icon.png", drawIcon({ size: 1024, contentScale: 1 }));
+
+// Android adaptive foreground: transparent, mark inside the 66% safe zone.
+write("adaptive-icon.png", drawIcon({ size: 1024, contentScale: 0.62, background: false }));
+
+// Android monochrome layer: white mark on transparent, tinted by the launcher.
+write("monochrome-icon.png", drawIcon({ size: 1024, contentScale: 0.62, background: false }));
+
+// Web favicon.
+write("favicon.png", drawIcon({ size: 48, cornerRadius: 10, contentScale: 1 }));
+
+// Splash mark: transparent, padded, scaled down by expo-splash-screen.
+write("splash-icon.png", drawIcon({ size: 512, contentScale: 0.74, background: false }));
+
+for (const line of written) console.log(`  ${line}`);
 console.log(`Written to ${path.relative(process.cwd(), OUT_DIR)}`);

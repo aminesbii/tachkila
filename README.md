@@ -1,36 +1,188 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Tachkila
 
-## Getting Started
+A live auction draft for one phone. Two to six managers sit around a table, a host
+calls the next footballer, bids are shouted out loud, and the host records the
+winning price. Every squad and every point is saved on the device.
 
-First, run the development server:
+Built with Expo SDK 58, React Native 0.88, Expo Router and TypeScript. No accounts,
+no server, no network calls at runtime.
+
+## Features
+
+- 2 to 6 managers, five formations, a fresh randomised pool for every game.
+- Goalkeepers called first, forwards last, so every squad can be completed.
+- Custom on-screen number pad for final bids — the system keyboard never opens.
+- A winning bid is 1 bank point minimum and can never exceed the manager's bank.
+- Live standings, recent sales, per-manager pitch view and a final table.
+- Undo (last 12 actions), redraw pool, edit setup, delete game.
+- Everything persists locally through AsyncStorage; closing the app mid-auction
+  loses nothing.
+- Dark auction-night theme with optional haptics.
+
+## Requirements
+
+- Node.js `^22.13.0` or newer (Expo SDK 58 requirement).
+- Android: JDK 17 and the Android SDK (platform 36, build tools).
+- iOS: macOS + Xcode for a local build, or the GitHub Actions workflow for a
+  cloud build. Installing on a real iPhone needs no Apple Developer account.
+
+## Getting started
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
+npm start          # Metro
+npm run android    # build + install debug app on a device/emulator
+npm run ios        # macOS only
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+The Android emulator used during development is `Pixel_9`. Start it with:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+emulator -avd Pixel_9
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+To play on a physical iPhone instead, see
+[Run it on your iPhone](#run-it-on-your-iphone).
 
-## Learn More
+## Scripts
 
-To learn more about Next.js, take a look at the following resources:
+| Script | What it does |
+| --- | --- |
+| `npm start` | Start Metro / Expo dev server |
+| `npm run start:tunnel` | Start Metro over a tunnel (phone on another network) |
+| `npm run android` | Prebuild + install a debug build |
+| `npm run ios` | Prebuild + install a debug build (macOS) |
+| `npm run build:ios-ipa` | Build an unsigned `.ipa` for sideloading (macOS) |
+| `npm run typecheck` | `tsc --noEmit` |
+| `npm run lint` | Expo ESLint config |
+| `npm test` | Vitest engine + persistence tests |
+| `npm run doctor` | `expo-doctor` project checks |
+| `npm run icons` | Regenerate every icon/splash asset |
+| `npm run build:android` | Build a release APK with Gradle |
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Project layout
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+```
+src/
+  app/            Expo Router routes (home, wizard, game, rules, settings)
+  components/     UI kit, setup and game components
+  data/           Footballer seed data
+  engine/         Pure game rules — no React, no I/O
+  hooks/          Room/game/settings hooks
+  lib/            Display, setup and presentation helpers
+  storage/        AsyncStorage adapter + room repository
+  theme/          Colours, spacing, typography
+tests/            Vitest suites for the engine and repository
+scripts/          Icon generator
+docs/SRS.md       Product requirements (source of truth for rules)
+```
 
-## Deploy on Vercel
+The engine (`src/engine`) is deliberately pure: every action is a function from one
+`RoomDoc` to the next. The repository wraps it with persistence, migration and an
+undo stack, which keeps the door open for an online back end later.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Data & migration
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- Rooms are stored under `tachkila.room.v2.<CODE>`, an index under
+  `tachkila.index.v2`, and undo snapshots under `tachkila.undo.v2.<CODE>`.
+- `RoomDoc.schemaVersion` is `2`; `updatedAt`/`createdAt` are epoch milliseconds.
+- Older documents that stored `updatedAt` as an ISO string are upgraded on read.
+- At most 20 games and 12 undo steps are kept per game.
+
+## Android release signing
+
+The repo ignores `android/` because it is generated by `expo prebuild`. Release
+signing credentials live in `keystores/signing.properties` (gitignored):
+
+```properties
+storeFile=keystores/tachkila-release.keystore
+keyAlias=tachkila
+storePassword=********
+keyPassword=********
+```
+
+`npm run build:android` runs `scripts/configure-android-release.mjs`, which injects
+the `MYAPP_UPLOAD_*` Gradle properties and the release `signingConfig`, then builds
+both the APK and the AAB. Artefacts land in `android/app/build/outputs/apk/release/`
+and `android/app/build/outputs/bundle/release/`.
+
+After a fresh `expo prebuild`, `npm run build:android` re-applies the signing config
+automatically. Keep the keystore and `signing.properties` backed up: losing them
+means future updates can no longer be installed over this release.
+
+For cloud builds, `eas.json` already defines `development`, `preview` and
+`production` profiles:
+
+```bash
+npx eas build -p android --profile production
+npx eas build -p ios --profile production   # needs an Apple Developer account
+```
+
+## Run it on your iPhone
+
+Two ways to get the game onto a physical iPhone. Neither needs an emulator, and
+neither needs a paid Apple Developer account.
+
+### Option 1 — Expo Go (fastest, nothing to install yourself)
+
+The app runs natively on the phone while Metro serves the JavaScript from your PC.
+
+1. Install **Expo Go** from the App Store on the iPhone.
+2. Start the dev server on the PC, using the tunnel when the phone is on a
+   different network (mobile data, VPN, guest Wi-Fi):
+
+   ```bash
+   npm run start:tunnel
+   ```
+
+3. Scan the QR code with the iPhone Camera app.
+
+Expo Go only supports the SDK it shipped with, so this needs an Expo Go build for
+SDK 58. If it reports a project/version mismatch, use option 2.
+
+### Option 2 — Standalone app with a free Apple ID
+
+Produces a real home-screen app named Tachkila that works offline. The `.ipa` is
+built in the cloud by `.github/workflows/ios-ipa.yml` (free macOS runner), then
+signed on your Windows PC with the free Apple ID you already have.
+
+One-time setup:
+
+1. Create a GitHub repository and push this project to it (private is fine).
+   Commit `app.json` and `eas.json` too, and keep `package-lock.json` in sync with
+   `package.json`: the workflow runs `npm ci`, which refuses an out-of-date lock.
+2. In GitHub: **Actions → iOS unsigned IPA → Run workflow**. The job runs
+   `scripts/build-ios-ipa.sh` (prebuild → pods → unsigned Release build → zip).
+3. When it finishes, download the `tachkila-ios-ipa` artefact and unzip it to get
+   `Tachkila.ipa`.
+4. On Windows install [Sideloadly](https://sideloadly.io) plus the Microsoft Store
+   **Apple Devices** app (or iTunes), so the phone can be driven over USB.
+5. Connect the iPhone by USB and tap **Trust** on the phone.
+
+Every install (and every week, see below):
+
+1. Open Sideloadly, drag `Tachkila.ipa` in, type your Apple ID, press **Start**.
+2. On the iPhone, enable Settings → Privacy & Security → **Developer Mode**, then
+   restart when prompted.
+3. Trust the signing certificate in Settings → General → VPN & Device Management.
+
+Free-account limits: the signature expires after **7 days** (re-run Sideloadly, or
+leave Sideloadly's auto-refresh running on the same network), at most 3 sideloaded
+apps per device, and 10 App IDs per week.
+
+On a Mac you can skip GitHub and build locally with `npm run build:ios-ipa`, which
+writes `dist/Tachkila.ipa`. `npm run ios` (`expo run:ios`) needs macOS + Xcode, and
+`eas build -p ios` for a device requires the paid Apple Developer Program.
+
+## Tests
+
+```bash
+npm test
+```
+
+43 tests cover pool generation, formation slots, auction rules, scoring, persistence,
+undo and legacy migration.
+
+## History
+
+The original Next.js web version is preserved on the `legacy/web` branch.
