@@ -1,5 +1,5 @@
-import { useCallback, useMemo, useState } from "react";
-import { ActivityIndicator, Alert, Pressable, StyleSheet, View } from "react-native";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { ActivityIndicator, Alert, Image, Pressable, StyleSheet, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useKeepAwake } from "expo-keep-awake";
 import { useLocalSearchParams, useRouter } from "expo-router";
@@ -27,6 +27,7 @@ import type { Position, PublicRoom } from "@/engine/types";
 import { POSITION_SHORT_LABEL } from "@/engine/types";
 import { useModalHandoff } from "@/hooks/use-modal-handoff";
 import { useRoom } from "@/hooks/use-room";
+import { playerPhoto } from "@/lib/display";
 import { hapticSelect, hapticSuccess, hapticTap, hapticWarning } from "@/lib/feedback";
 import { nextEntries, remainingByPosition, statusLabel, teamScore, totalFilled } from "@/lib/game-view";
 import { setupFromRoomNames, type SetupValue } from "@/lib/setup";
@@ -68,12 +69,22 @@ export default function GameScreen() {
     [room]
   );
 
+  // Warm the next portraits so the auction card never pops in blank.
+  useEffect(() => {
+    if (!room) return;
+    for (const entry of nextEntries(room, 4)) {
+      const uri = playerPhoto(entry);
+      if (uri) void Image.prefetch(uri).catch(() => undefined);
+    }
+  }, [room]);
+
   const handleAssign = useCallback(
     async (seat: number, bid: number) => {
       if (!current) return false;
       const winner = room?.participants.find((participant) => participant.seat === seat);
       const result = {
         entryName: current.name,
+        imageUrl: playerPhoto(current),
         position: current.position,
         pts: current.pts,
         winnerName: winner?.name ?? `Seat ${seat}`,

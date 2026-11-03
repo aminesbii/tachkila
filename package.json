@@ -16,6 +16,7 @@
     "test:watch": "vitest",
     "doctor": "npx expo-doctor",
     "icons": "node scripts/generate-icons.mjs",
+    "images": "node scripts/fetch-player-images.mjs",
     "build:android": "node scripts/configure-android-release.mjs && cd android && gradlew.bat assembleRelease bundleRelease"
   },
   "dependencies": {

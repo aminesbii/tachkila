@@ -3,8 +3,9 @@ import { LinearGradient } from "expo-linear-gradient";
 import { Ionicons } from "@expo/vector-icons";
 
 import { AppText } from "@/components/ui/AppText";
+import { PlayerAvatar } from "@/components/game/PlayerAvatar";
 import type { PublicPoolEntry } from "@/engine/types";
-import { flagFor, initials } from "@/lib/display";
+import { flagFor, playerPhoto } from "@/lib/display";
 import { ptsColor } from "@/lib/game-view";
 import { colors, radii, spacing } from "@/theme";
 
@@ -34,11 +35,13 @@ export function PlayerCard({ entry }: { entry: PublicPoolEntry }) {
       </View>
 
       <View style={styles.avatarWrap}>
-        <View style={[styles.avatarRing, { borderColor: accent + "55" }]}>
-          <View style={[styles.avatar, { backgroundColor: accent + "18" }]}>
-            <AppText style={[styles.avatarText, { color: accent }]}>{initials(entry.name)}</AppText>
-          </View>
-        </View>
+        <PlayerAvatar
+          name={entry.name}
+          imageUrl={playerPhoto(entry)}
+          size={132}
+          color={accent}
+          ring
+        />
       </View>
 
       <View style={styles.identity}>
@@ -113,26 +116,6 @@ const styles = StyleSheet.create({
   avatarWrap: {
     alignItems: "center",
     paddingVertical: spacing.md,
-  },
-  avatarRing: {
-    width: 104,
-    height: 104,
-    borderRadius: 52,
-    borderWidth: 1,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  avatar: {
-    width: 88,
-    height: 88,
-    borderRadius: 44,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  avatarText: {
-    fontSize: 30,
-    fontWeight: "800",
-    letterSpacing: -1,
   },
   identity: {
     alignItems: "center",

@@ -2,7 +2,9 @@ import { ScrollView, StyleSheet, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 
 import { AppText } from "@/components/ui/AppText";
+import { PlayerAvatar } from "@/components/game/PlayerAvatar";
 import type { PublicPoolEntry } from "@/engine/types";
+import { playerPhoto } from "@/lib/display";
 import { ptsColor } from "@/lib/game-view";
 import { colors, radii, spacing } from "@/theme";
 
@@ -27,7 +29,12 @@ export function UpcomingStrip({ entries }: { entries: PublicPoolEntry[] }) {
       >
         {entries.map((entry) => (
           <View key={entry.id} style={styles.chip}>
-            <View style={[styles.dot, { backgroundColor: ptsColor(entry.pts) }]} />
+            <PlayerAvatar
+              name={entry.name}
+              imageUrl={playerPhoto(entry)}
+              size={26}
+              color={ptsColor(entry.pts)}
+            />
             <View style={styles.chipText}>
               <AppText variant="caption" numberOfLines={1} style={styles.name}>
                 {entry.name}
@@ -68,11 +75,6 @@ const styles = StyleSheet.create({
     borderColor: colors.border,
     backgroundColor: colors.surface,
     maxWidth: 168,
-  },
-  dot: {
-    width: 7,
-    height: 7,
-    borderRadius: 3.5,
   },
   chipText: {
     flexShrink: 1,

@@ -11,8 +11,9 @@ must not be resurrected.
    there and cover them in `tests/`.
 2. **All persistence goes through `src/storage/room-repository.ts`.** Do not touch
    AsyncStorage directly outside `src/storage/async-storage.ts`.
-3. **One host, one phone.** There is no server, no auth and no network at runtime.
-   Keep it that way unless the product explicitly adds online play.
+3. **One host, one phone.** There is no server and no auth. The only network call
+   at runtime is downloading player portraits (Wikimedia); everything else stays
+   local. Keep it that way unless the product explicitly adds online play.
 4. **Dark only.** Colours, spacing, radii and typography come from `src/theme`.
    Never hard-code a hex value in a component when a theme token fits.
 5. **Bid entry uses `BidPad`.** Never focus a `TextInput` for numeric bids.
@@ -22,11 +23,12 @@ must not be resurrected.
 ```bash
 npm run typecheck   # must pass
 npm run lint        # must pass
-npm test            # 43 Vitest tests
+npm test            # 51 Vitest tests
 npm run doctor      # expo-doctor, 20 checks
 npm run android     # debug build on emulator/device
 npm run start:tunnel  # Metro over a tunnel, for a physical iPhone
 npm run icons       # regenerate assets from scripts/generate-icons.mjs
+npm run images      # re-resolve player portraits into src/data/player-images.ts
 ```
 
 ## Layout shorthand
@@ -35,8 +37,8 @@ npm run icons       # regenerate assets from scripts/generate-icons.mjs
   screen with lobby / auction / results modes.
 - `src/components/ui` — generic kit (`Button`, `Card`, `Field`, `BottomSheet`,
   `Toast`, `Screen`, …).
-- `src/components/game` — auction-specific pieces (`PlayerCard`, `Pitch`,
-  `TeamCarousel`, `AssignSheet`, `SaleOverlay`, `BidPad`, `Standings`, …).
+- `src/components/game` — auction-specific pieces (`PlayerCard`, `PlayerAvatar`,
+  `Pitch`, `TeamCarousel`, `AssignSheet`, `SaleOverlay`, `BidPad`, `Standings`, …).
 - `src/components/setup` — new-game wizard pieces shared with the edit sheet.
 - `src/hooks` — `useRoom` (game state + actions), `useGames` (home list),
   `useSettings` (haptics).
@@ -61,6 +63,9 @@ npm run icons       # regenerate assets from scripts/generate-icons.mjs
   `parseDoc` in the repository must migrate older documents.
 - Undo snapshots live beside the room, not inside it, so a future sync layer can
   replay actions without shipping the stack.
+- Portraits are never required state: `PlayerAvatar` shows
+  `playerPhoto(entry)` (stored link, else the `PLAYER_IMAGES` lookup by name) and
+  falls back to `monogram(name)`. Never block a screen on an image download.
 
 ## Android notes
 

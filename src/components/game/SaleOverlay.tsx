@@ -3,11 +3,13 @@ import { Animated, BackHandler, Pressable, StyleSheet, View } from "react-native
 import { Ionicons } from "@expo/vector-icons";
 
 import { AppText } from "@/components/ui/AppText";
+import { PlayerAvatar } from "@/components/game/PlayerAvatar";
 import { SeatAvatar } from "@/components/game/SeatAvatar";
 import { colors, radii, seatColor, spacing } from "@/theme";
 
 export interface SaleResult {
   entryName: string;
+  imageUrl?: string;
   position: string;
   pts: number;
   winnerName: string;
@@ -64,8 +66,17 @@ export function SaleOverlay({
       />
 
       <Animated.View style={[styles.card, { opacity, transform: [{ scale }] }]}>
-        <View style={styles.burst}>
-          <Ionicons name="checkmark" size={26} color={colors.textInverse} />
+        <View style={styles.portrait}>
+          <PlayerAvatar
+            name={sale.entryName}
+            imageUrl={sale.imageUrl}
+            size={104}
+            color={colors.primary}
+            ring
+          />
+          <View style={styles.burst}>
+            <Ionicons name="checkmark" size={18} color={colors.textInverse} />
+          </View>
         </View>
 
         <AppText variant="label" color={colors.primary}>
@@ -144,12 +155,19 @@ const styles = StyleSheet.create({
     backgroundColor: colors.backgroundElevated,
   },
   burst: {
-    width: 52,
-    height: 52,
-    borderRadius: 26,
+    position: "absolute",
+    right: -2,
+    bottom: -2,
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    borderWidth: 3,
+    borderColor: colors.backgroundElevated,
     backgroundColor: colors.primary,
     alignItems: "center",
     justifyContent: "center",
+  },
+  portrait: {
     marginBottom: spacing.xs,
   },
   rule: {

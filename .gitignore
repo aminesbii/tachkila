@@ -45,3 +45,6 @@ coverage/
 
 # local env files
 .env*.local
+
+# player image lookup cache
+scripts/.player-images-cache.json

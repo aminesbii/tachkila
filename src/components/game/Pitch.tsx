@@ -3,8 +3,9 @@ import { LinearGradient } from "expo-linear-gradient";
 import { Ionicons } from "@expo/vector-icons";
 
 import { AppText } from "@/components/ui/AppText";
+import { PlayerAvatar } from "@/components/game/PlayerAvatar";
 import type { Position, PublicRoom } from "@/engine/types";
-import { initials } from "@/lib/display";
+import { playerPhoto } from "@/lib/display";
 import { filledAt, ptsColor, rosterEntries, teamScore, totalFilled } from "@/lib/game-view";
 import { colors, radii, spacing } from "@/theme";
 
@@ -69,11 +70,12 @@ export function Pitch({ room, seat }: { room: PublicRoom; seat: number }) {
                 const entry = filled[index];
                 return entry ? (
                   <View key={`${position}-${index}`} style={styles.tokenWrap}>
-                    <View style={styles.token}>
-                      <AppText style={styles.tokenText} numberOfLines={1}>
-                        {initials(entry.name)}
-                      </AppText>
-                    </View>
+                    <PlayerAvatar
+                      name={entry.name}
+                      imageUrl={playerPhoto(entry)}
+                      size={30}
+                      color="#FFFFFF"
+                    />
                     <View style={[styles.ptsPill, { backgroundColor: ptsColor(entry.pts) }]}>
                       <AppText style={styles.ptsText}>{entry.pts}</AppText>
                     </View>
@@ -171,22 +173,6 @@ const styles = StyleSheet.create({
   tokenWrap: {
     alignItems: "center",
     width: 32,
-  },
-  token: {
-    width: 30,
-    height: 30,
-    borderRadius: 15,
-    backgroundColor: "#FFFFFF",
-    alignItems: "center",
-    justifyContent: "center",
-    borderWidth: 1,
-    borderColor: "rgba(0,0,0,0.16)",
-  },
-  tokenText: {
-    fontSize: 9,
-    fontWeight: "800",
-    color: "#1B2A22",
-    letterSpacing: -0.2,
   },
   ptsPill: {
     minWidth: 16,

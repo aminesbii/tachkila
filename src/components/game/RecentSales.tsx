@@ -2,8 +2,9 @@ import { StyleSheet, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 
 import { AppText } from "@/components/ui/AppText";
-import { SeatAvatar } from "@/components/game/SeatAvatar";
+import { PlayerAvatar } from "@/components/game/PlayerAvatar";
 import type { PublicRoom } from "@/engine/types";
+import { playerPhoto } from "@/lib/display";
 import { soldEntries } from "@/lib/game-view";
 import { colors, radii, seatColor, spacing } from "@/theme";
 
@@ -28,7 +29,12 @@ export function RecentSales({ room, limit = 8 }: { room: PublicRoom; limit?: num
         const color = winner ? seatColor(winner.seat) : colors.textMuted;
         return (
           <View key={entry.id} style={styles.row}>
-            <SeatAvatar name={winner?.name ?? "Ticket"} color={color} size={30} />
+            <PlayerAvatar
+              name={entry.name}
+              imageUrl={playerPhoto(entry)}
+              size={32}
+              color={color}
+            />
             <View style={{ flex: 1, gap: 1 }}>
               <AppText variant="bodyStrong" numberOfLines={1} style={styles.name}>
                 {entry.name}

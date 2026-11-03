@@ -1,3 +1,4 @@
+import { PLAYER_IMAGES } from "@/data/player-images";
 import type { Position } from "@/engine/types";
 
 const FLAGS: Record<string, string> = {
@@ -62,6 +63,21 @@ export function initials(name: string): string {
   if (parts.length === 0) return "?";
   if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
   return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+}
+
+/** First two letters of a name, shown when a footballer has no portrait. */
+export function monogram(name: string): string {
+  const letters = name.trim().replace(/\s+/g, " ");
+  return letters.slice(0, 2).toUpperCase() || "?";
+}
+
+/**
+ * Online portrait of a footballer. Entries drawn after the portrait list was
+ * added already carry the link; older saved games are resolved by name so they
+ * get pictures too.
+ */
+export function playerPhoto(entry: { name: string; imageUrl?: string }): string | undefined {
+  return entry.imageUrl || PLAYER_IMAGES[entry.name] || undefined;
 }
 
 export function positionOrder(position: Position): number {

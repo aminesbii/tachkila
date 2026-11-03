@@ -1,3 +1,4 @@
+import { PLAYER_IMAGES } from "@/data/player-images";
 import type { Position } from "@/engine/types";
 
 export interface PlayerSeed {
@@ -171,6 +172,7 @@ const SEED_PLAYERS: PlayerSeed[] = (() => {
       id: seen === 0 ? baseId : `${baseId}-${seen + 1}`,
       name,
       nationality: raw.nationality.trim(),
+      imageUrl: raw.imageUrl ?? PLAYER_IMAGES[name],
     });
   }
 
