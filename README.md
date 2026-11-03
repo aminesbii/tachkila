@@ -166,10 +166,18 @@ One-time setup:
 1. Create a GitHub repository and push this project to it (private is fine).
    Commit `app.json` and `eas.json` too, and keep `package-lock.json` in sync with
    `package.json`: the workflow runs `npm ci`, which refuses an out-of-date lock.
-2. In GitHub: **Actions → iOS unsigned IPA → Run workflow**. The job runs
-   `scripts/build-ios-ipa.sh` (prebuild → pods → unsigned Release build → zip).
-3. When it finishes, download the `tachkila-ios-ipa` artefact and unzip it to get
-   `Tachkila.ipa`.
+2. In GitHub: **Actions → iOS unsigned IPA → Run workflow** (or push a tag that
+   starts with `ios-`). The job runs `scripts/build-ios-ipa.sh`
+   (prebuild → pods → unsigned Release build → zip).
+3. When it finishes, open **Releases** and download `Tachkila.ipa` from the
+   `latest-build` release — that link stays valid between runs:
+
+   ```
+   https://github.com/<owner>/<repo>/releases/download/latest-build/Tachkila.ipa
+   ```
+
+   The same file is attached to the run as the `tachkila-ios-ipa` artifact, but
+   artifacts are deleted after 14 days, so prefer the release.
 4. On Windows install [Sideloadly](https://sideloadly.io) plus the Microsoft Store
    **Apple Devices** app (or iTunes), so the phone can be driven over USB.
 5. Connect the iPhone by USB and tap **Trust** on the phone.

@@ -2,13 +2,20 @@ name: iOS unsigned IPA
 
 # Builds an unsigned .ipa in the cloud (no Mac at home) so the app can be
 # sideloaded onto an iPhone with a free Apple ID via Sideloadly or AltStore.
+#
 # Manual run: Actions -> "iOS unsigned IPA" -> Run workflow.
+# Every run also refreshes the "latest-build" release, so the .ipa can be
+# re-downloaded for the weekly re-sign without digging through artifacts.
 
 on:
   workflow_dispatch:
   push:
     tags:
       - "ios-*"
+
+# Needed for GITHUB_TOKEN to create the release below.
+permissions:
+  contents: write
 
 jobs:
   ipa:
@@ -44,3 +51,27 @@ jobs:
           path: dist/Tachkila.ipa
           if-no-files-found: error
           retention-days: 14
+
+      # A release outlives the 14-day artifact, which matters because a free
+      # Apple ID has to re-sign the same .ipa every 7 days.
+      # The tag is deliberately not "ios-*": a tag push matching that pattern
+      # would trigger this workflow again on every release.
+      - name: Publish IPA to Releases
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: latest-build
+          name: Tachkila IPA
+          make_latest: false
+          overwrite_files: true
+          files: dist/Tachkila.ipa
+          body: |
+            Unsigned `Tachkila.ipa` for sideloading with Sideloadly or AltStore
+            and a free Apple ID — no paid Apple Developer account needed.
+
+            - Download `Tachkila.ipa` below, then drag it into Sideloadly.
+            - A free-account signature expires after **7 days**: re-run Sideloadly
+              with this same file to keep playing. No rebuild required.
+            - Enable Developer Mode on the phone the first time
+              (Settings -> Privacy & Security -> Developer Mode).
+            - Trust the signing certificate under
+              Settings -> General -> VPN & Device Management.
